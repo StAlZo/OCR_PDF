@@ -213,4 +213,7 @@ pdfFileObj.close()
 
 # Удаляем содержимое страницы
 result = ''.join(text_per_page['Page_0'][4])
-print(result)
+print(''.join(text_per_page['Page_13'][2]))
+print(''.join(text_per_page['Page_14'][2]))
+print("************************")
+# print(result)
