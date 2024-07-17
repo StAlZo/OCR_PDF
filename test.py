@@ -1,4 +1,6 @@
 # Для считывания PDF
+import re
+
 import PyPDF2
 # Для анализа структуры PDF и извлечения текста
 from pdfminer.high_level import extract_pages, extract_text
@@ -12,7 +14,7 @@ from pdf2image import convert_from_path
 import pytesseract
 # Для удаления дополнительно созданных файлов
 import os
-
+from handler.pulling_out import summarize_text
 
 def text_extraction(element):
     # Извлекаем текст из вложенного текстового элемента
@@ -98,7 +100,8 @@ def table_converter(table):
 
 
 # Находим путь к PDF
-pdf_path = '/home/stas/PycharmProjects/OCRdemo/Пример_ТЗ_3.pdf'
+# pdf_path = '/home/stas/PycharmProjects/OCRdemo/Пример_ТЗ_2.pdf'
+pdf_path = '/home/stas/PycharmProjects/OCRdemo/ТЗ на выполнение работ.pdf'
 
 # создаём объект файла PDF
 pdfFileObj = open(pdf_path, 'rb')
@@ -212,8 +215,30 @@ pdfFileObj.close()
 # os.remove('PDF_image.png')
 
 # Удаляем содержимое страницы
-result = ''.join(text_per_page['Page_0'][4])
-print(''.join(text_per_page['Page_13'][2]))
-print(''.join(text_per_page['Page_14'][2]))
-print("************************")
+# result = ''.join(text_per_page['Page_0'][4])
+# print(''.join(text_per_page['Page_9'][4]))
+# print(text_per_page)
+# print(''.join(text_per_page['Page_14'][4]))
+# print("************************")
 # print(result)
+result = ''
+key_words_list = ['Наименование заказчикa',
+                  'Наименование проекта',
+                  'Адрес(-а) расположения защищаемых объектов заказчика',
+                  'Перечень работ выполняемых',
+                  'Перечень требований по функциям проектируемой системы защиты информации',
+                  'Информация о объекте(-ах)защиты',
+                  'заказчик',
+                  'ТЕХНИЧЕСКОЕ ЗАДАНИЕ',
+                  'Срок',
+                  ]
+for i, j in enumerate(text_per_page):
+    b = ''.join(text_per_page[f'Page_{i}'][4])
+    # print(type(b))
+    for k in key_words_list:
+        if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
+
+            result += b
+    # print(i)
+print(summarize_text(result))
+# summarize_text(result)
