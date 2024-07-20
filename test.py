@@ -1,9 +1,8 @@
 # Для считывания PDF
-import re
 
 import PyPDF2
 # Для анализа структуры PDF и извлечения текста
-from pdfminer.high_level import extract_pages, extract_text
+from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer, LTChar, LTRect, LTFigure
 # Для извлечения текста из таблиц в PDF
 import pdfplumber
@@ -13,8 +12,6 @@ from pdf2image import convert_from_path
 # Для выполнения OCR, чтобы извлекать тексты из изображений
 import pytesseract
 # Для удаления дополнительно созданных файлов
-import os
-from handler.pulling_out import summarize_text
 
 def text_extraction(element):
     # Извлекаем текст из вложенного текстового элемента
@@ -232,13 +229,14 @@ key_words_list = ['Наименование заказчикa',
                   'ТЕХНИЧЕСКОЕ ЗАДАНИЕ',
                   'Срок',
                   ]
-for i, j in enumerate(text_per_page):
-    b = ''.join(text_per_page[f'Page_{i}'][4])
-    # print(type(b))
-    for k in key_words_list:
-        if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
-
-            result += b
-    # print(i)
-print(summarize_text(result))
+# for i, j in enumerate(text_per_page):
+#     b = ''.join(text_per_page[f'Page_{i}'][4])
+#     # print(type(b))
+#     for k in key_words_list:
+#         if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
+#
+#             result += b
+#     # print(i)
+# print(summarize_text(result))
 # summarize_text(result)
+

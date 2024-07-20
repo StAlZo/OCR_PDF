@@ -1,5 +1,6 @@
 
-from handler_def import *
+from handler.handler_def import *
+from docx import Document
 
 
 class HandlerPDF:
@@ -63,9 +64,9 @@ class HandlerPDF:
                     # Вырезаем изображение из PDF
                     crop_image(element, pageObj)
                     # Преобразуем обрезанный pdf в изображение
-                    convert_to_images('cropped_image.pdf')
+                    convert_to_images('OCRPDF/handler/cropped_image.pdf')
                     # Извлекаем текст из изображения
-                    image_text = image_to_text('PDF_image.png')
+                    image_text = image_to_text('OCRPDF/handler/PDF_image.png')
                     self.text_from_images.append(image_text)
                     self.page_content.append(image_text)
                     # Добавляем условное обозначение в списки текста и формата
@@ -109,5 +110,25 @@ class HandlerPDF:
                                           self.text_from_tables, self.page_content]
             pdfFileObj.close()
             # result = ''.join(self.text_per_page['Page_0'][4])
-
+            os.remove('OCRPDF/handler/cropped_image.pdf')
+            os.remove('OCRPDF/handler/PDF_image.png')
             return self.text_per_page
+
+
+class DOCX:
+    def __init__(self, name: str):
+        self.__doc = Document()
+        self.__name = name
+
+    def add_paragraph(self, text: str) -> None:
+        self.__doc.add_paragraph(text)
+
+    def save(self) -> None:
+        self.__doc.save(f'{self.__name}.docx')
+
+    def doc(self):
+        return self.__doc
+
+    @property
+    def name(self):
+        return self.__name
