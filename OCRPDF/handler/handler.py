@@ -1,16 +1,22 @@
-
-from handler.handler_def import *
+import re
+import PyPDF2
+# Для анализа структуры PDF и извлечения текста
+from pdfminer.high_level import extract_pages, extract_text
+from pdfminer.layout import LTTextContainer, LTChar, LTRect, LTFigure
+# Для извлечения текста из таблиц в PDF
+import pdfplumber
+from OCRPDF.handler.handler_def import text_extraction, crop_image, convert_to_images, image_to_text, extract_table, table_converter
 from docx import Document
 
 
 class HandlerPDF:
     def __init__(self):
-        self.text_per_page = {}
-        self.page_text = []
-        self.line_format = []
-        self.text_from_images = []
-        self.text_from_tables = []
-        self.page_content = []
+        self.__text_per_page = {}
+        self.__page_text = []
+        self.__line_format = []
+        self.__text_from_images = []
+        self.__text_from_tables = []
+        self.__page_content = []
 
     def extrations_from_pdf(self, pdf_path: str):
         # print(type(pdf))
@@ -51,10 +57,10 @@ class HandlerPDF:
                         # Используем функцию извлечения текста и формата для каждого текстового элемента
                         (line_text, format_per_line) = text_extraction(element)
                         # Добавляем текст каждой строки к тексту страницы
-                        self.page_text.append(line_text)
+                        self.__page_text.append(line_text)
                         # Добавляем формат каждой строки, содержащей текст
-                        self.line_format.append(format_per_line)
-                        self.page_content.append(line_text)
+                        self.__line_format.append(format_per_line)
+                        self.__page_content.append(line_text)
                     else:
                         # Пропускаем текст, находящийся в таблице
                         pass
@@ -64,14 +70,14 @@ class HandlerPDF:
                     # Вырезаем изображение из PDF
                     crop_image(element, pageObj)
                     # Преобразуем обрезанный pdf в изображение
-                    convert_to_images('OCRPDF/handler/cropped_image.pdf')
+                    convert_to_images('OCRdemo/OCRPDF/handler/cropped_image.pdf')
                     # Извлекаем текст из изображения
-                    image_text = image_to_text('OCRPDF/handler/PDF_image.png')
-                    self.text_from_images.append(image_text)
-                    self.page_content.append(image_text)
+                    image_text = image_to_text('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png')
+                    self.__text_from_images.append(image_text)
+                    self.__page_content.append(image_text)
                     # Добавляем условное обозначение в списки текста и формата
-                    self.page_text.append('image')
-                    self.line_format.append('image')
+                    self.__page_text.append('image')
+                    self.__line_format.append('image')
 
                 # Проверяем элементы на наличие таблиц
                 if isinstance(element, LTRect):
@@ -85,15 +91,15 @@ class HandlerPDF:
                         # Преобразуем информацию таблицы в формат структурированной строки
                         table_string = table_converter(table)
                         # Добавляем строку таблицы в список
-                        self.text_from_tables.append(table_string)
-                        self.page_content.append(table_string)
+                        self.__text_from_tables.append(table_string)
+                        self.__page_content.append(table_string)
                         # Устанавливаем флаг True, чтобы избежать повторения содержимого
                         table_extraction_flag = True
                         # Преобразуем в другой элемент
                         first_element = False
                         # Добавляем условное обозначение в списки текста и формата
-                        self.page_text.append('table')
-                        self.line_format.append('table')
+                        self.__page_text.append('table')
+                        self.__line_format.append('table')
 
                     # Проверяем, извлекли ли мы уже таблицы из этой страницы
                     if element.y0 >= lower_side and element.y1 <= upper_side:
@@ -106,13 +112,13 @@ class HandlerPDF:
             # Создаём ключ для словаря
             dctkey = 'Page_' + str(pagenum)
             # Добавляем список списков как значение ключа страницы
-            self.text_per_page[dctkey] = [self.page_text, self.line_format, self.text_from_images,
-                                          self.text_from_tables, self.page_content]
+            self.__text_per_page[dctkey] = [self.__page_text, self.__line_format, self.__text_from_images,
+                                            self.__text_from_tables, self.__page_content]
             pdfFileObj.close()
             # result = ''.join(self.text_per_page['Page_0'][4])
-            os.remove('OCRPDF/handler/cropped_image.pdf')
-            os.remove('OCRPDF/handler/PDF_image.png')
-            return self.text_per_page
+            # os.remove('OCRPDF/handler/cropped_image.pdf')
+            # os.remove('OCRPDF/handler/PDF_image.png')
+            return self.__text_per_page
 
 
 class DOCX:
@@ -124,7 +130,7 @@ class DOCX:
         self.__doc.add_paragraph(text)
 
     def save(self) -> None:
-        self.__doc.save(f'{self.__name}.docx')
+        self.__doc.save(f'media/docx_files/{self.__name}.docx')
 
     def doc(self):
         return self.__doc
@@ -132,3 +138,33 @@ class DOCX:
     @property
     def name(self):
         return self.__name
+
+
+class PdfToDocx:
+
+    def __init__(self, name: str):
+        self.__document = DOCX(name)
+        self.__handler = HandlerPDF()
+        self.__result = ''
+        self.__key_words_list = ['Наименование заказчикa',
+                                 'Наименование проекта',
+                                 'Адрес(-а) расположения защищаемых объектов заказчика',
+                                 'Перечень работ выполняемых',
+                                 'Перечень требований по функциям проектируемой системы защиты информации',
+                                 'Информация о объекте(-ах)защиты',
+                                 'заказчик',
+                                 'ТЕХНИЧЕСКОЕ ЗАДАНИЕ',
+                                 'Срок',
+                                 ]
+
+    def init_recognition(self, pdf_path: str):
+        page = self.__handler.extrations_from_pdf(pdf_path)
+        for i, j in enumerate(page):
+            b = ''.join(page[f'Page_{i}'][4])
+
+            # for k in self.__key_words_list:
+            #     if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
+            self.__result += b
+        self.__document.add_paragraph(self.__result)
+        self.__document.save()
+        return self.__document.name

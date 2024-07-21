@@ -46,15 +46,15 @@ def crop_image(element, pageObj):
     cropped_pdf_writer = PyPDF2.PdfWriter()
     cropped_pdf_writer.add_page(pageObj)
     # Сохраняем обрезанный PDF в новый файл
-    with open('OCRPDF/handler/cropped_image.pdf', 'wb') as cropped_pdf_file:
+    with open('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf', 'wb') as cropped_pdf_file:
         cropped_pdf_writer.write(cropped_pdf_file)
 
 
 # Создаём функцию для преобразования PDF в изображения
 def convert_to_images(input_file, ):
-    images = convert_from_path(input_file)
+    images = convert_from_path('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf')
     image = images[0]
-    output_file = "OCRPDF/handler/PDF_image.png"
+    output_file = "/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png"
     image.save(output_file, "PNG")
 
 

@@ -8,12 +8,6 @@ def extract_text_between_keywords(text, keyword1, keyword2):
     else:
         return None
 
-text = "Это пример текста, в котором мы хотим выделить фрагменты между ключевыми словами 'Python' и 'вырезать'."
-keyword1 = "Python"
-keyword2 = "вырезать"
-
-# extracted_text = extract_text_between_keywords(text, keyword1, keyword2)
-# print(extracted_text)
 
 import nltk
 from nltk.corpus import stopwords

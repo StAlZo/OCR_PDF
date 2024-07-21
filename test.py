@@ -1,4 +1,5 @@
 # Для считывания PDF
+import re
 
 import PyPDF2
 # Для анализа структуры PDF и извлечения текста
@@ -11,6 +12,10 @@ from PIL import Image
 from pdf2image import convert_from_path
 # Для выполнения OCR, чтобы извлекать тексты из изображений
 import pytesseract
+
+from handler.pulling_out import summarize_text
+
+
 # Для удаления дополнительно созданных файлов
 
 def text_extraction(element):
@@ -98,7 +103,7 @@ def table_converter(table):
 
 # Находим путь к PDF
 # pdf_path = '/home/stas/PycharmProjects/OCRdemo/Пример_ТЗ_2.pdf'
-pdf_path = '/home/stas/PycharmProjects/OCRdemo/ТЗ на выполнение работ.pdf'
+pdf_path = '/home/stas/PycharmProjects/OCRdemo/Пример_ТЗ_3.pdf'
 
 # создаём объект файла PDF
 pdfFileObj = open(pdf_path, 'rb')
@@ -229,14 +234,15 @@ key_words_list = ['Наименование заказчикa',
                   'ТЕХНИЧЕСКОЕ ЗАДАНИЕ',
                   'Срок',
                   ]
-# for i, j in enumerate(text_per_page):
-#     b = ''.join(text_per_page[f'Page_{i}'][4])
-#     # print(type(b))
-#     for k in key_words_list:
-#         if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
-#
-#             result += b
-#     # print(i)
+for i, j in enumerate(text_per_page):
+    b = ''.join(text_per_page[f'Page_{i}'][4])
+
+    # for k in key_words_list:
+    #     if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
+
+    result += b
+    # print(i)
+print(result)
 # print(summarize_text(result))
 # summarize_text(result)
 
