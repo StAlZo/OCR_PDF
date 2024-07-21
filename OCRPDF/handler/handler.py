@@ -1,3 +1,4 @@
+import os
 import re
 import PyPDF2
 # Для анализа структуры PDF и извлечения текста
@@ -5,18 +6,20 @@ from pdfminer.high_level import extract_pages, extract_text
 from pdfminer.layout import LTTextContainer, LTChar, LTRect, LTFigure
 # Для извлечения текста из таблиц в PDF
 import pdfplumber
-from OCRPDF.handler.handler_def import text_extraction, crop_image, convert_to_images, image_to_text, extract_table, table_converter
+from handler.handler_def import text_extraction, crop_image, convert_to_images, image_to_text, extract_table, table_converter
 from docx import Document
+
+from handler.pulling_out import summarize_text
 
 
 class HandlerPDF:
     def __init__(self):
         self.__text_per_page = {}
-        self.__page_text = []
-        self.__line_format = []
-        self.__text_from_images = []
-        self.__text_from_tables = []
-        self.__page_content = []
+        self.__page_text = None
+        self.__line_format = None
+        self.__text_from_images = None
+        self.__text_from_tables = None
+        self.__page_content = None
 
     def extrations_from_pdf(self, pdf_path: str):
         # print(type(pdf))
@@ -27,6 +30,11 @@ class HandlerPDF:
 
             # Инициализируем переменные, необходимые для извлечения текста со страницы
             pageObj = pdfReaded.pages[pagenum]
+            self.__page_text = []
+            self.__line_format = []
+            self.__text_from_images = []
+            self.__text_from_tables = []
+            self.__page_content = []
             # Инициализируем количество исследованных таблиц
             table_num = 0
             first_element = True
@@ -114,11 +122,12 @@ class HandlerPDF:
             # Добавляем список списков как значение ключа страницы
             self.__text_per_page[dctkey] = [self.__page_text, self.__line_format, self.__text_from_images,
                                             self.__text_from_tables, self.__page_content]
-            pdfFileObj.close()
+
             # result = ''.join(self.text_per_page['Page_0'][4])
-            # os.remove('OCRPDF/handler/cropped_image.pdf')
-            # os.remove('OCRPDF/handler/PDF_image.png')
-            return self.__text_per_page
+
+        pdfFileObj.close()
+
+        return self.__text_per_page
 
 
 class DOCX:
@@ -129,8 +138,8 @@ class DOCX:
     def add_paragraph(self, text: str) -> None:
         self.__doc.add_paragraph(text)
 
-    def save(self) -> None:
-        self.__doc.save(f'media/docx_files/{self.__name}.docx')
+    def save(self, dir: str) -> None:
+        self.__doc.save(f'media/{dir}/{self.__name}.docx')
 
     def doc(self):
         return self.__doc
@@ -144,6 +153,7 @@ class PdfToDocx:
 
     def __init__(self, name: str):
         self.__document = DOCX(name)
+        self.__summary = DOCX(f'summary_{name}')
         self.__handler = HandlerPDF()
         self.__result = ''
         self.__key_words_list = ['Наименование заказчикa',
@@ -166,5 +176,9 @@ class PdfToDocx:
             #     if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
             self.__result += b
         self.__document.add_paragraph(self.__result)
-        self.__document.save()
-        return self.__document.name
+        self.__document.save("docx_files")
+        self.__summary.add_paragraph(summarize_text(self.__result))
+        self.__summary.save("summary")
+        # os.remove('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf')
+        # os.remove('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png')
+        return self.__document.name, self.__summary.name

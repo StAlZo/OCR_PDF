@@ -1,4 +1,7 @@
 # Create your views here.
+import zipfile
+from io import BytesIO
+
 from django.http import FileResponse
 from django.shortcuts import render
 from .forms import FileUploadForm
@@ -15,10 +18,22 @@ def file_upload_view(request):
             name_docx = fp.pdf_file.name.replace('/', '')
             det = PdfToDocx(name_docx)
             docx_name = det.init_recognition(f'media/{fp.pdf_file.name}')
-            fp.docx_file = f'media/docx_files/ + {docx_name}.docx'
+            fp.docx_file = f'media/docx_files/{docx_name[0]}.docx'
             fp.save()
-            filw = FileResponse(open(f'media/docx_files/{docx_name}.docx', "rb"))
-            return filw
+            fp.summary = f'media/summary/{docx_name[1]}.docx'
+            fp.save()
+            buffer = BytesIO()
+            with zipfile.ZipFile(buffer, 'w') as zipf:
+                # Добавляем файлы в архив
+                zipf.write(fp.docx_file)
+                zipf.write(fp.summary)
+
+            # Подготавливаем буфер для отправки
+            buffer.seek(0)
+
+            # Создаем FileResponse и отправляем архив
+            response = FileResponse(buffer, as_attachment=True, filename='example.zip')
+            return response
     else:
         form = FileUploadForm()
     return render(request, 'trans_PDF/upload.html', {'form': form})
