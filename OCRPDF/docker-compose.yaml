@@ -1,0 +1,44 @@
+version: '3'
+services:
+    web:
+      container_name: Web-app
+      build: .
+      command:
+              sh -c "python manage.py makemigrations &&
+              python manage.py migrate &&
+              gunicorn --timeout 500 config.wsgi:application --bind 0.0.0.0:8000"
+
+
+#      volumes:
+#        - для статических файлов
+      environment:
+        - .env
+      expose:
+        - 8000
+      networks:
+        main:
+          aliases:
+            - web
+
+    nginx:
+      container_name: Nginx
+      build: ./nginx
+#      volumes:
+#        - волумы для статики и медиа
+      ports:
+        - "8000:80"
+      links:
+        - "web:web"
+      networks:
+        main:
+          aliases:
+            - web
+      depends_on:
+        - web
+
+networks:
+  main:
+
+
+
+

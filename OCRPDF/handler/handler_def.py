@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import PyPDF2
 # Для анализа структуры PDF и извлечения текста
 from pdfminer.high_level import extract_pages, extract_text
@@ -6,7 +8,7 @@ from pdfminer.layout import LTTextContainer, LTChar, LTRect, LTFigure
 import pdfplumber
 # Для извлечения изображений из PDF
 from PIL import Image
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path, convert_from_bytes
 # Для выполнения OCR, чтобы извлекать тексты из изображений
 import pytesseract
 # Для удаления дополнительно созданных файлов
@@ -42,24 +44,59 @@ def crop_image(element, pageObj):
     # Обрезаем страницу по координатам (left, bottom, right, top)
     pageObj.mediabox.lower_left = (image_left, image_bottom)
     pageObj.mediabox.upper_right = (image_right, image_top)
+
+    # Создаем буфер BytesIO для сохранения PDF
+    cropped_pdf_buffer = BytesIO()
+
     # Сохраняем обрезанную страницу в новый PDF
     cropped_pdf_writer = PyPDF2.PdfWriter()
     cropped_pdf_writer.add_page(pageObj)
-    # Сохраняем обрезанный PDF в новый файл
-    with open('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf', 'wb') as cropped_pdf_file:
-        cropped_pdf_writer.write(cropped_pdf_file)
+
+    # Записываем PDF в буфер
+    cropped_pdf_writer.write(cropped_pdf_buffer)
+
+    # Сбрасываем указатель чтения/записи в начало буфера
+    cropped_pdf_buffer.seek(0)
+
+    # Теперь у вас есть обрезанная страница PDF, сохраненная в буфере cropped_pdf_buffer
+    # Вы можете вернуть этот буфер или использовать его для дальнейших операций
+
+    return cropped_pdf_buffer
+    # # Получаем координаты для вырезания изображения из PDF
+    # [image_left, image_top, image_right, image_bottom] = [element.x0, element.y0, element.x1, element.y1]
+    # # Обрезаем страницу по координатам (left, bottom, right, top)
+    # pageObj.mediabox.lower_left = (image_left, image_bottom)
+    # pageObj.mediabox.upper_right = (image_right, image_top)
+    # # Сохраняем обрезанную страницу в новый PDF
+    # cropped_pdf_writer = PyPDF2.PdfWriter()
+    # cropped_pdf_writer.add_page(pageObj)
+    # # Сохраняем обрезанный PDF в новый файл
+    # with open('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf', 'wb') as cropped_pdf_file:
+    #     cropped_pdf_writer.write(cropped_pdf_file)
 
 
 # Создаём функцию для преобразования PDF в изображения
-def convert_to_images(input_file, ):
-    images = convert_from_path('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf')
-    image = images[0]
-    output_file = "/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png"
-    image.save(output_file, "PNG")
+def convert_to_images(cropped_pdf_buffer):
+        # Преобразуем буфер PDF в изображения
+        images = convert_from_bytes(cropped_pdf_buffer.read())
+        # Получаем первое изображение из списка
+        image = images[0]
+        # Создаем буфер BytesIO для сохранения PNG изображения
+        png_image_buffer = BytesIO()
+        # Сохраняем изображение в формате PNG в буфер
+        image.save(png_image_buffer, format='PNG')
+        # Сбрасываем указатель чтения/записи в начало буфера
+        png_image_buffer.seek(0)
+        return png_image_buffer
+    # images = convert_from_path('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf')
+    # image = images[0]
+    # output_file = "/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png"
+    # image.save(output_file, "PNG")
 
 
 # Создаём функцию для считывания текста из изображений
 def image_to_text(image_path):
+    image_path.seek(0)
     # Считываем изображение
     img = Image.open(image_path)
     # Извлекаем текст из изображения

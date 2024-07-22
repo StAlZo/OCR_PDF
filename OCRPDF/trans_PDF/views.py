@@ -3,12 +3,16 @@ import zipfile
 from io import BytesIO
 
 from django.http import FileResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+
 from .forms import FileUploadForm
 from .models import UploadedFile
 from handler.handler import DOCX, PdfToDocx
 from django.core.files.base import ContentFile
 
+@csrf_exempt
 def file_upload_view(request):
     if request.method == 'POST':
         form = FileUploadForm(request.POST, request.FILES)

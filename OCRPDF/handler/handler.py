@@ -76,11 +76,13 @@ class HandlerPDF:
                 # Проверяем элементы на наличие изображений
                 if isinstance(element, LTFigure):
                     # Вырезаем изображение из PDF
-                    crop_image(element, pageObj)
+                    cropped_pdf_buffer = crop_image(element, pageObj)
                     # Преобразуем обрезанный pdf в изображение
-                    convert_to_images('OCRdemo/OCRPDF/handler/cropped_image.pdf')
+                    png_image_buffer = convert_to_images(cropped_pdf_buffer)
+                    #'OCRdemo/OCRPDF/handler/cropped_image.pdf'
                     # Извлекаем текст из изображения
-                    image_text = image_to_text('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png')
+                    image_text = image_to_text(png_image_buffer)
+                    #'/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png'
                     self.__text_from_images.append(image_text)
                     self.__page_content.append(image_text)
                     # Добавляем условное обозначение в списки текста и формата
@@ -122,9 +124,6 @@ class HandlerPDF:
             # Добавляем список списков как значение ключа страницы
             self.__text_per_page[dctkey] = [self.__page_text, self.__line_format, self.__text_from_images,
                                             self.__text_from_tables, self.__page_content]
-
-            # result = ''.join(self.text_per_page['Page_0'][4])
-
         pdfFileObj.close()
 
         return self.__text_per_page
@@ -156,6 +155,7 @@ class PdfToDocx:
         self.__summary = DOCX(f'summary_{name}')
         self.__handler = HandlerPDF()
         self.__result = ''
+        self.__result_sum = ''
         self.__key_words_list = ['Наименование заказчикa',
                                  'Наименование проекта',
                                  'Адрес(-а) расположения защищаемых объектов заказчика',
@@ -171,14 +171,13 @@ class PdfToDocx:
         page = self.__handler.extrations_from_pdf(pdf_path)
         for i, j in enumerate(page):
             b = ''.join(page[f'Page_{i}'][4])
-
-            # for k in self.__key_words_list:
-            #     if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
             self.__result += b
+            for k in self.__key_words_list:
+                if bool(re.search(r'\b{}\b'.format(re.escape(k)), b, re.IGNORECASE)):
+                    self.__result_sum += b
+
         self.__document.add_paragraph(self.__result)
         self.__document.save("docx_files")
-        self.__summary.add_paragraph(summarize_text(self.__result))
+        self.__summary.add_paragraph(summarize_text(self.__result_sum))
         self.__summary.save("summary")
-        # os.remove('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/cropped_image.pdf')
-        # os.remove('/home/stas/PycharmProjects/OCRdemo/OCRPDF/handler/PDF_image.png')
         return self.__document.name, self.__summary.name
