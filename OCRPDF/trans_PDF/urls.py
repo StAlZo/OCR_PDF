@@ -4,7 +4,7 @@ from trans_PDF.views import *
 
 
 urlpatterns = [
-    path('trans/', file_upload_view),
+    path('', file_upload_view),
     # path('', home, name='home'),
     # path('generate_docx/', generate_docx, name='generate_docx'),
 ]
