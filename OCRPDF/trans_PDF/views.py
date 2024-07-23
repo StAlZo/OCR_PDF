@@ -42,3 +42,4 @@ def file_upload_view(request):
         form = FileUploadForm()
     return render(request, 'trans_PDF/upload.html', {'form': form})
 
+

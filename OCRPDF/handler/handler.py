@@ -181,3 +181,4 @@ class PdfToDocx:
         self.__summary.add_paragraph(summarize_text(self.__result_sum))
         self.__summary.save("summary")
         return self.__document.name, self.__summary.name
+
